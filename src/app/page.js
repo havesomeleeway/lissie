@@ -37,6 +37,15 @@ export default function Page() {
     }
   }, [isLoading, messages]);
 
+// Handle "Start Over"
+const handleStartOver = () => {
+  setMessages([]);
+  setInput("");
+  setAnalysisResults(null); // Reset analysis results
+  setSelectedTopic(""); // Reset topic selection
+  setQuestionCount(0); // Reset question count
+};
+
   const handleTopicSelection = async (value) => {
     setSelectedTopic(value);
     setCustomTopic("");
@@ -72,26 +81,33 @@ export default function Page() {
     const data = await response.json();
     setMessages([
       { role: "assistant", content: `Let's talk about ${topic}.` },
-      { role: "assistant", content: data.result || "What are your thoughts on this topic?" },
+      {
+        role: "assistant",
+        content: data.result || "What are your thoughts on this topic?",
+      },
     ]);
     inputRef.current?.focus();
   };
 
   const handleUserResponse = async () => {
     if (!input.trim()) return;
-  
+
     const userMessage = { role: "user", content: input };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
-  
+
     if (questionCount + 1 >= MAX_QUESTIONS) {
       setIsLoading(true);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Thank you for your participation! Analyzing your answers..." },
+        {
+          role: "assistant",
+          content:
+            "Thank you for your participation! Analyzing your answers...",
+        },
       ]);
-  
+
       try {
         console.log("Calling sentiment API...");
         const response = await fetch("/api/sentiment", {
@@ -99,28 +115,31 @@ export default function Page() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: updatedMessages }),
         });
-  
+
         const sentimentData = await response.json();
         console.log("Sentiment API Response:", sentimentData);
-  
+
         setAnalysisResults(sentimentData);
       } catch (error) {
         console.error("Error fetching sentiment analysis:", error);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "An error occurred while analyzing your responses." },
+          {
+            role: "assistant",
+            content: "An error occurred while analyzing your responses.",
+          },
         ]);
       } finally {
         setIsLoading(false);
       }
-  
+
       return;
     }
-  
+
     // Handle regular response if MAX_QUESTIONS is not reached
     setIsLoading(true);
     setQuestionCount((prev) => prev + 1);
-  
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -131,7 +150,7 @@ export default function Page() {
           topic: selectedTopic,
         }),
       });
-  
+
       const data = await response.json();
       setMessages((prev) => [
         ...prev,
@@ -141,13 +160,16 @@ export default function Page() {
       console.error("Error fetching chat response:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "An error occurred while processing your response." },
+        {
+          role: "assistant",
+          content: "An error occurred while processing your response.",
+        },
       ]);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  };  
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -159,22 +181,15 @@ export default function Page() {
   return (
     <div>
       <Container size="3">
-        <Heading
-          as="h1"
-          align="center"
-          mb="2"
-        >
+        <Heading as="h1" align="center" mb="2">
           Hello, I am Lissie, your AI Interviewer
         </Heading>
 
         <Flex direction="column" gap="4" align="center" mt="4">
           {!selectedTopic ? (
             <Box width="100%">
-              <Heading
-                as="h2"
-                mb="2"
-              >
-                Let's start by selecting a topic
+              <Heading as="h2" mb="2">
+                Let's start by selecting a topic and i will ask you 10 questions.
               </Heading>
 
               <Select.Root
@@ -206,10 +221,7 @@ export default function Page() {
               </Button>
             </Box>
           ) : (
-            <Heading
-              as="h2"
-              size="5"
-            >
+            <Heading as="h2" size="5">
               Topic: {selectedTopic}
             </Heading>
           )}
@@ -229,25 +241,81 @@ export default function Page() {
           </Box>
 
           {analysisResults && (
-            <Box width="100%" radius="md" shadow="sm" padding="3" style={{ marginTop: "20px" }}>
-    <Heading as="h3" mb="2">Analysis Results</Heading>
-    <ul>
-      <li><strong>Overall Sentiment:</strong> {analysisResults.overallSentiment}</li>
-      <li><strong>Summary:</strong> {analysisResults.summary}</li>
-      <li><strong>Positive Elements:</strong> {analysisResults.positiveElements || "None identified"}</li>
-      <li><strong>Negative Elements:</strong> {analysisResults.negativeElements || "None identified"}</li>
-      <li><strong>Neutral Elements:</strong> {analysisResults.neutralElements || "None identified"}</li>
-      <li><strong>Key Themes:</strong> {analysisResults.keyThemes || "None identified"}</li>
-    </ul>
-  </Box>
+            <Box
+              width="100%"
+              radius="md"
+              shadow="sm"
+              padding="3"
+              style={{ marginTop: "20px" }}
+            >
+              <Heading as="h3" mb="2">
+                Analysis Results
+              </Heading>
+              <ul>
+                <li>
+                  <strong>Overall Sentiment:</strong>{" "}
+                  {analysisResults.overallSentiment}
+                </li>
+                <li>
+                  <strong>Summary:</strong> {analysisResults.summary}
+                </li>
+                <li>
+                  <strong>Positive Elements:</strong>
+                  {analysisResults.positiveElements?.length > 0 ? (
+                    <ul>
+                      {analysisResults.positiveElements.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "None identified"
+                  )}
+                </li>
+                <li>
+                  <strong>Negative Elements:</strong>
+                  {analysisResults.negativeElements?.length > 0 ? (
+                    <ul>
+                      {analysisResults.negativeElements.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "None identified"
+                  )}
+                </li>
+                <li>
+                  <strong>Neutral Elements:</strong>
+                  {analysisResults.neutralElements?.length > 0 ? (
+                    <ul>
+                      {analysisResults.neutralElements.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "None identified"
+                  )}
+                </li>
+                <li>
+                  <strong>Key Themes:</strong>
+                  {analysisResults.keyThemes?.length > 0 ? (
+                    <ul>
+                      {analysisResults.keyThemes.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "None identified"
+                  )}
+                </li>
+              </ul>
+              <Button variant="classic" size="3" onClick={handleStartOver}>
+                {" "}
+                Start Over{" "}
+              </Button>
+            </Box>
           )}
 
-          <Flex
-            direction="row"
-            gap="3"
-            width="100%"
-            align="end"
-          >
+          <Flex direction="row" gap="3" width="100%" align="end">
             <TextArea
               autoComplete="true"
               ref={inputRef}

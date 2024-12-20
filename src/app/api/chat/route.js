@@ -30,8 +30,8 @@ export async function POST(req) {
 
     // Generate the follow-up question
     const prompt = `
-      You are an subject matter expert interviewer tasked with asking a user 10 questions about the topic: "${topic}". 
-      The user has already responded to some of your questions. Your questions must be based on the context of a Singaporean.
+      You are a researcher asking a Singaporean 10 questions about the topic: "${topic}". 
+      The user has already responded to some of your questions.
 
       Based on the user's previous responses:
       ${messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}

@@ -12,7 +12,6 @@
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-select": "^2.1.4",
     "@radix-ui/themes": "^3.1.6",
-    "@supabase/supabase-js": "^2.47.8",
     "next": "15.1.1",
     "openai": "^4.77.0",
     "react": "^19.0.0",
